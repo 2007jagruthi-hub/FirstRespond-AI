@@ -7,7 +7,7 @@ from google.genai import types
 app = Flask(__name__)
 
 # Initialize the modern Google GenAI Client
-# Ensure your GEMINI_API_KEY environment variable is configured in your terminal session
+# Automatically picks up the GEMINI_API_KEY from Render's Environment settings
 client = genai.Client()
 
 SYSTEM_PROMPT = """
@@ -32,28 +32,24 @@ def index():
 
 @app.route('/triage', methods=['POST'])
 def handle_triage():
-    # Capture standard or dynamic multi-language text fields
     data = request.get_json() or {}
     description = data.get('description', '')
     language = data.get('language', 'English')
     incident_type = data.get('incident_type', '')
 
-    # Build clear context for the prompt execution block
     user_input = f"Incident Type Context: {incident_type}\nDescription: {description}\nRequested Language: {language}"
-    
     combined_prompt = f"{SYSTEM_PROMPT}\n\nInput Incident: '{user_input}'. Translate instructions and summary directly into: {language}"
 
     try:
-        # UPDATED: Using the stable production 'gemini-3.5-flash' endpoint to bypass the 404 deprecation error
+        # FIXED: Using the official production 'gemini-2.5-flash' endpoint
         response = client.models.generate_content(
-            model='gemini-3.5-flash',
+            model='gemini-2.5-flash',
             contents=combined_prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
             ),
         )
         
-        # Clean external markdown wrappers if present and load string to dictionary
         cleaned_text = response.text.strip().replace("```json", "").replace("```", "")
         parsed_json = json.loads(cleaned_text)
         
@@ -61,7 +57,6 @@ def handle_triage():
 
     except Exception as e:
         print("AI Processing Exception:", e)
-        # Structural offline fallback matching your core interface specifications
         return jsonify({
             "urgency": "HIGH",
             "category": "Medical Emergency",
