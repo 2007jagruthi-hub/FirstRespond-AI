@@ -6,9 +6,9 @@ from google.genai import types
 
 app = Flask(__name__)
 
-# Initialize the modern Google GenAI Client
-# Automatically picks up the GEMINI_API_KEY from Render's Environment settings
-client = genai.Client()
+# MODIFIED: Explicitly grab the key via os.environ to guarantee visibility on Render instances
+api_key_val = os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=api_key_val)
 
 SYSTEM_PROMPT = """
 You are an advanced emergency triage AI. Analyze the user described incident or text snippet.
@@ -41,7 +41,7 @@ def handle_triage():
     combined_prompt = f"{SYSTEM_PROMPT}\n\nInput Incident: '{user_input}'. Translate instructions and summary directly into: {language}"
 
     try:
-        # FIXED: Using the official production 'gemini-2.5-flash' endpoint
+        # MODIFIED: Changed model endpoint to the official production 'gemini-2.5-flash'
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=combined_prompt,
