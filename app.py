@@ -43,7 +43,7 @@ def handle_triage():
     try:
         # MODIFIED: Changed model endpoint to the official production 'gemini-2.5-flash'
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=combined_prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
